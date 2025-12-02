@@ -91,6 +91,8 @@ public class HttpConnection implements Runnable {
             String [] parts = line.split(" ");
             
             if(parts.length==3){
+                
+                //Comparar antes de todo incluso la versión HTTP/1.0 o HTTP/1.1
                    if(parts[0].equalsIgnoreCase("GET"))
                    {  
                        
@@ -118,19 +120,30 @@ public class HttpConnection implements Runnable {
                             path = DEFAULT_DOCUMENT;
                         }
 
-                        
+                       
                         String file_path = DOCUMENT_ROOT+host_field+path;
                         System.out.println("ruta el recurso:" + file_path);
-                        // Esto se debe eliminar solo está para responder al cliente
+                       
+                        String contentType = getType(path);
+                        byte[] data = getDataEx(file_path);
+                        
+                        
+                        
+                            // Esto se debe eliminar solo está para responder al cliente
                         // con una respuesta básica para comprobar conectividad
                         dos.write(("HTTP/1.1 200 OK"+CRLF).getBytes());
                         dos.write(("Connection: close"+CRLF).getBytes());
                         dos.write(("Content-Type: text/html"+CRLF).getBytes());
-                        dos.write(("Content-Length: 52"+CRLF).getBytes());
+                        dos.write(("Content-Length: "+data.length+CRLF).getBytes());
                         dos.write((CRLF).getBytes());
-                        dos.write(("<html><meta charset='utf-8'><p>Práctica 4</p></html>"+CRLF).getBytes());
+                        dos.write(data);
                         dos.flush();
                         //Eliminar hasta aquí
+                       //envío los datos
+                        
+                            
+                        
+                       
                     }
                 }else{
                        //Método no permitido
@@ -143,7 +156,21 @@ public class HttpConnection implements Runnable {
                 dos.write((CRLF).getBytes());
                 dos.flush();
             }
-        } catch (IOException ex) {
+        } 
+        catch (FileNotFoundException exNF){
+            System.out.println("Error 404");
+            try {
+                dos.write(("HTTP/1.1 404 Not found"+CRLF).getBytes());
+                   dos.write(("Connection: close"+CRLF).getBytes());
+                            dos.write((CRLF).getBytes());
+                            dos.flush();
+            } catch (IOException ex) {
+                System.getLogger(HttpConnection.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
+                         
+        }
+        
+        catch (IOException ex) {
             Logger.getLogger(HttpConnection.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
@@ -156,7 +183,48 @@ public class HttpConnection implements Runnable {
 
     }
 
-    
+    private String getType(String path) {
+       return "text/html";
+    }
+
+    private byte[] getData(String file_path) {
+        FileInputStream fis = null;
+        try {
+            File f = new File(file_path);
+            fis = new FileInputStream(f);
+            return null;
+        } catch (FileNotFoundException ex) {
+            System.getLogger(HttpConnection.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            return null;
+        } catch(IOException ex2){
+             System.getLogger(HttpConnection.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex2);
+            return null;
+        }
+        finally {
+            try {
+                fis.close();
+            } catch (IOException ex) {
+                System.getLogger(HttpConnection.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
+        }
+    }
+
+    private byte[] getDataEx(String file_path) throws FileNotFoundException {
+        FileInputStream fis = null;
+        
+            File f = new File(file_path);
+            fis = new FileInputStream(f);
+           
+        
+            try{
+                fis.close();
+            } catch (IOException ex) {
+                System.getLogger(HttpConnection.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
+            
+            return null;
+        }
+
     
 
 }
