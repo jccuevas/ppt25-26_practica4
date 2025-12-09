@@ -81,10 +81,11 @@ public class HttpConnection implements Runnable {
 
             BufferedReader bis = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
+            
             String line = bis.readLine();//Se obtiene la línea de petición/request line
             //Request line: GET /index.html HTTP/1.1CRLF
             String request_line = line;//Se guarda para mostrarla más tarde
-            String host_field="";//Para guardar la cabecera Host
+            String host_field="192.168.56.1";//Para guardar la cabecera Host
             
             
            System.out.println("Leido[" + request_line.length() + "]: " + request_line);
@@ -125,17 +126,17 @@ public class HttpConnection implements Runnable {
                         System.out.println("ruta el recurso:" + file_path);
                        
                         String contentType = getType(path);
-                        byte[] data = getDataEx(file_path);
+                        byte[] data = getDataEx(file_path);//Comportamiento por excepciones
                         
                         
                         
-                            // Esto se debe eliminar solo está para responder al cliente
+                        // Esto se debe eliminar solo está para responder al cliente
                         // con una respuesta básica para comprobar conectividad
                         dos.write(("HTTP/1.1 200 OK"+CRLF).getBytes());
                         dos.write(("Connection: close"+CRLF).getBytes());
-                        dos.write(("Content-Type: text/html"+CRLF).getBytes());
+                        dos.write(("Content-Type:"+contentType+CRLF).getBytes());
                         dos.write(("Content-Length: "+data.length+CRLF).getBytes());
-                        dos.write((CRLF).getBytes());
+                        dos.write((CRLF).getBytes());//fin de cabeceras
                         dos.write(data);
                         dos.flush();
                         //Eliminar hasta aquí
@@ -192,7 +193,9 @@ public class HttpConnection implements Runnable {
         try {
             File f = new File(file_path);
             fis = new FileInputStream(f);
-            return null;
+            byte[] data = new byte[(int)f.length()];
+            fis.read(data);
+            return data;
         } catch (FileNotFoundException ex) {
             System.getLogger(HttpConnection.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
             return null;
@@ -209,15 +212,19 @@ public class HttpConnection implements Runnable {
         }
     }
 
-    private byte[] getDataEx(String file_path) throws FileNotFoundException {
+    private byte[] getDataEx(String file_path) throws FileNotFoundException, IOException {
         FileInputStream fis = null;
         
             File f = new File(file_path);
             fis = new FileInputStream(f);
+            byte[] data = new byte[(int)f.length()];
+            fis.read(data);
+            
            
         
             try{
                 fis.close();
+                return data;
             } catch (IOException ex) {
                 System.getLogger(HttpConnection.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
             }
